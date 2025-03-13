@@ -7,15 +7,162 @@ local teleportLocation = nil
 local markEnabled = false
 local healthThreshold = 50 -- القيمة الافتراضية 50%
 local selectedItems = {} -- لتخزين العناصر المحددة
+local flyEnabled = false
+local noclipEnabled = false
+local speedMultiplier = 1 -- مضاعف السرعة الافتراضي
+local currentLanguage = "Arabic" -- اللغة الافتراضية
+local resetOnDie = false -- تعطيل إعادة التعيين عند الموت
+
+-- قاموس الترجمة
+local translations = {
+    Arabic = {
+        title = "أداة التحكم بالانتقال",
+        mainTab = "الرئيسية",
+        teleportTab = "الانتقال",
+        itemsTab = "الأدوات",
+        settingsTab = "الإعدادات",
+        setLocation = "تعيين الموقع",
+        teleport = "الانتقال",
+        autoTeleport = "تفعيل الانتقال التلقائي",
+        teleportTool = "أداة الانتقال",
+        healthPercentage = "نسبة الصحة للانتقال التلقائي (%)",
+        status = "الحالة: ",
+        ready = "جاهز",
+        locationSet = "تم تعيين الموقع!",
+        teleported = "تم الانتقال!",
+        autoTeleportEnabled = "تم تفعيل الانتقال التلقائي",
+        autoTeleportDisabled = "تم تعطيل الانتقال التلقائي",
+        thresholdSet = "تم تعيين العتبة إلى ",
+        invalidThreshold = "قيمة عتبة غير صالحة",
+        autoTeleported = "تم الانتقال تلقائيًا: صحة منخفضة",
+        noLocationSet = "خطأ: لم يتم تعيين موقع",
+        characterNotFound = "خطأ: لم يتم العثور على الشخصية",
+        toolsTitle = "قائمة الأدوات",
+        select = "تحديد",
+        cancel = "إلغاء",
+        getSelectedItems = "جلب العناصر المحددة",
+        settingsTitle = "إعدادات البرنامج",
+        transparency = "شفافية الواجهة",
+        buttonColor = "لون الأزرار",
+        saveSettings = "حفظ الإعدادات",
+        resetSettings = "إعادة تعيين الإعدادات",
+        language = "اللغة",
+        noclipTool = "أداة اختراق الجدران",
+        flyTool = "أداة الطيران",
+        speedTool = "أداة السرعة",
+        speedValue = "قيمة السرعة:",
+        settingsSaved = "تم حفظ الإعدادات",
+        settingsReset = "تم إعادة تعيين الإعدادات",
+        noclipEnabled = "تم تفعيل اختراق الجدران",
+        noclipDisabled = "تم تعطيل اختراق الجدران",
+        flyEnabled = "تم تفعيل الطيران",
+        flyDisabled = "تم تعطيل الطيران",
+        speedChanged = "تم تغيير السرعة إلى: ",
+        toolAdded = "تمت إضافة الأداة إلى الحقيبة",
+        killScript = "إنهاء البرنامج"
+    },
+    English = {
+        title = "Teleport Control Tool",
+        mainTab = "Main",
+        teleportTab = "Teleport",
+        itemsTab = "Tools",
+        settingsTab = "Settings",
+        setLocation = "Set Location",
+        teleport = "Teleport",
+        autoTeleport = "Enable Auto-Teleport",
+        teleportTool = "Teleport Tool",
+        healthPercentage = "Health Percentage for Auto-Teleport (%)",
+        status = "Status: ",
+        ready = "Ready",
+        locationSet = "Location set!",
+        teleported = "Teleported!",
+        autoTeleportEnabled = "Auto-Teleport enabled",
+        autoTeleportDisabled = "Auto-Teleport disabled",
+        thresholdSet = "Threshold set to ",
+        invalidThreshold = "Invalid threshold value",
+        autoTeleported = "Auto-Teleported: Low health",
+        noLocationSet = "Error: No location set",
+        characterNotFound = "Error: Character not found",
+        toolsTitle = "Tools List",
+        select = "Select",
+        cancel = "Cancel",
+        getSelectedItems = "Get Selected Tools",
+        settingsTitle = "Program Settings",
+        transparency = "Interface Transparency",
+        buttonColor = "Button Color",
+        saveSettings = "Save Settings",
+        resetSettings = "Reset Settings",
+        language = "Language",
+        noclipTool = "Noclip Tool",
+        flyTool = "Fly Tool",
+        speedTool = "Speed Tool",
+        speedValue = "Speed Value:",
+        settingsSaved = "Settings saved",
+        settingsReset = "Settings reset",
+        noclipEnabled = "Noclip enabled",
+        noclipDisabled = "Noclip disabled",
+        flyEnabled = "Fly enabled",
+        flyDisabled = "Fly disabled",
+        speedChanged = "Speed changed to: ",
+        toolAdded = "Tool added to backpack",
+        killScript = "Kill Script"
+    }
+}
+
+-- دالة للحصول على النص المترجم
+local function getText(key)
+    return translations[currentLanguage][key] or key
+end
+
+-- دالة لحفظ الإعدادات
+local function saveSettings(settings)
+    local success, errorMsg = pcall(function()
+        writefile("teleport_tool_settings.json", game:GetService("HttpService"):JSONEncode(settings))
+    end)
+    
+    if not success then
+        warn("Failed to save settings: " .. errorMsg)
+    end
+end
+
+-- دالة لتحميل الإعدادات
+local function loadSettings()
+    local success, result = pcall(function()
+        if isfile("teleport_tool_settings.json") then
+            return game:GetService("HttpService"):JSONDecode(readfile("teleport_tool_settings.json"))
+        end
+        return nil
+    end)
+    
+    if success and result then
+        return result
+    else
+        return {
+            transparency = 0.1,
+            buttonColor = Color3.fromRGB(41, 98, 174),
+            language = "Arabic",
+            healthThreshold = 50,
+            speedMultiplier = 1
+        }
+    end
+end
+
+-- تحميل الإعدادات المحفوظة
+local savedSettings = loadSettings()
+if savedSettings then
+    healthThreshold = savedSettings.healthThreshold or healthThreshold
+    speedMultiplier = savedSettings.speedMultiplier or speedMultiplier
+    currentLanguage = savedSettings.language or currentLanguage
+end
 
 -- دالة لإنشاء الإطار الرئيسي
 local function createFrame()
     local frame = Instance.new("Frame")
     frame.Parent = screenGui
     frame.Size = UDim2.new(0, 400, 0, 400) -- أكبر قليلاً
-    frame.Position = UDim2.new(0.5, -200, 0.5, -200) -- توسيط الإطار
+    frame.Position = UDim2.new(0, 20, 0.5, -200) -- على اليسار
     frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- خلفية سوداء
-    frame.BackgroundTransparency = 0.1 -- شفافية قليلة
+    frame.BackgroundTransparency = savedSettings.transparency or 0.1 -- شفافية من الإعدادات
     frame.BorderSizePixel = 0 -- إزالة الحدود
     
     -- إضافة زوايا مستديرة
@@ -39,14 +186,30 @@ local function createFrame()
     -- نص العنوان
     local titleText = Instance.new("TextLabel")
     titleText.Parent = titleBar
-    titleText.Text = "أداة التحكم بالانتقال"
-    titleText.Size = UDim2.new(1, -40, 1, 0)
+    titleText.Text = getText("title")
+    titleText.Size = UDim2.new(1, -80, 1, 0)
     titleText.Position = UDim2.new(0, 20, 0, 0)
     titleText.BackgroundTransparency = 1
     titleText.TextColor3 = Color3.new(1, 1, 1)
     titleText.Font = Enum.Font.GothamBold
     titleText.TextSize = 18
     titleText.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- زر تبديل اللغة
+    local languageButton = Instance.new("TextButton")
+    languageButton.Parent = titleBar
+    languageButton.Text = currentLanguage == "Arabic" and "EN" or "عربي"
+    languageButton.Size = UDim2.new(0, 30, 0, 30)
+    languageButton.Position = UDim2.new(1, -70, 0.5, -15)
+    languageButton.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    languageButton.TextColor3 = Color3.new(1, 1, 1)
+    languageButton.Font = Enum.Font.GothamBold
+    languageButton.TextSize = 14
+    
+    -- زوايا مستديرة لزر اللغة
+    local langCorner = Instance.new("UICorner")
+    langCorner.Parent = languageButton
+    langCorner.CornerRadius = UDim.new(0, 15)
     
     -- إضافة زر الخروج
     local exitButton = Instance.new("TextButton")
@@ -96,10 +259,10 @@ local function createFrame()
     end
     
     -- إنشاء أزرار التبويب
-    local mainTabButton = createTabButton("الرئيسية", 0)
-    local teleportTabButton = createTabButton("الانتقال", 1)
-    local itemsTabButton = createTabButton("العناصر", 2)
-    local settingsTabButton = createTabButton("الإعدادات", 3)
+    local mainTabButton = createTabButton(getText("mainTab"), 0)
+    local teleportTabButton = createTabButton(getText("teleportTab"), 1)
+    local itemsTabButton = createTabButton(getText("itemsTab"), 2)
+    local settingsTabButton = createTabButton(getText("settingsTab"), 3)
     
     -- إنشاء صفحات المحتوى
     local mainTab = Instance.new("Frame")
@@ -236,7 +399,7 @@ local function createFrame()
     logoImage.Image = "rbxassetid://7592612672" -- استبدل برقم الصورة المناسب
     
     -- إضافة عنوان البرنامج
-    local appTitle = createStyledLabel(mainContent, "أداة الانتقال المتقدمة", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 130))
+    local appTitle = createStyledLabel(mainContent, getText("title"), UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 130))
     appTitle.TextSize = 24
     appTitle.Font = Enum.Font.GothamBold
     appTitle.TextXAlignment = Enum.TextXAlignment.Center
@@ -253,6 +416,9 @@ local function createFrame()
     description.TextWrapped = true
     description.TextXAlignment = Enum.TextXAlignment.Center
     
+    -- إضافة زر إنهاء البرنامج
+    local killScriptButton = createStyledButton(mainContent, getText("killScript"), Color3.fromRGB(174, 41, 41), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 320))
+    
     -- إنشاء محتوى تبويب الانتقال
     local teleportContent = Instance.new("ScrollingFrame")
     teleportContent.Parent = teleportTab
@@ -263,22 +429,20 @@ local function createFrame()
     teleportContent.CanvasSize = UDim2.new(0, 0, 0, 400) -- يمكن تعديله حسب المحتوى
     
     -- إضافة أزرار الانتقال
-    local setLocationButton = createStyledButton(teleportContent, "تعيين الموقع", Color3.fromRGB(41, 98, 174), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 10))
+    local setLocationButton = createStyledButton(teleportContent, getText("setLocation"), Color3.fromRGB(41, 98, 174), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 10))
     
-    local teleportButton = createStyledButton(teleportContent, "الانتقال", Color3.fromRGB(46, 148, 94), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 65))
+    local teleportButton = createStyledButton(teleportContent, getText("teleport"), Color3.fromRGB(46, 148, 94), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 65))
     
-    local markButton = createStyledButton(teleportContent, "تفعيل الانتقال التلقائي", Color3.fromRGB(174, 41, 41), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 120))
-    
-    local teleportToolButton = createStyledButton(teleportContent, "أداة الانتقال", Color3.fromRGB(90, 74, 164), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 175))
+    local markButton = createStyledButton(teleportContent, getText("autoTeleport"), Color3.fromRGB(174, 41, 41), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 120))
     
     -- إضافة مدخل نسبة الصحة
-    local healthLabel = createStyledLabel(teleportContent, "نسبة الصحة للانتقال التلقائي (%)", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 230))
+    local healthLabel = createStyledLabel(teleportContent, getText("healthPercentage"), UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 175))
     
     local healthInput = Instance.new("TextBox")
     healthInput.Parent = teleportContent
-    healthInput.PlaceholderText = "أدخل نسبة الصحة (مثال: 50)"
+    healthInput.PlaceholderText = "50"
     healthInput.Size = UDim2.new(1, 0, 0, 45)
-    healthInput.Position = UDim2.new(0, 0, 0, 260)
+    healthInput.Position = UDim2.new(0, 0, 0, 205)
     healthInput.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
     healthInput.TextColor3 = Color3.new(1, 1, 1)
     healthInput.Font = Enum.Font.GothamSemibold
@@ -295,7 +459,7 @@ local function createFrame()
     local statusContainer = Instance.new("Frame")
     statusContainer.Parent = teleportContent
     statusContainer.Size = UDim2.new(1, 0, 0, 45)
-    statusContainer.Position = UDim2.new(0, 0, 0, 315)
+    statusContainer.Position = UDim2.new(0, 0, 0, 260)
     statusContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     statusContainer.BorderSizePixel = 0
     
@@ -306,26 +470,63 @@ local function createFrame()
     
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Parent = statusContainer
-    statusLabel.Text = "الحالة: جاهز"
+    statusLabel.Text = getText("status") .. getText("ready")
     statusLabel.Size = UDim2.new(1, 0, 1, 0)
     statusLabel.BackgroundTransparency = 1
     statusLabel.TextColor3 = Color3.new(1, 1, 1)
     statusLabel.Font = Enum.Font.GothamMedium
     statusLabel.TextSize = 14
     
-    -- إنشاء محتوى تبويب العناصر
+    -- إنشاء محتوى تبويب الأدوات
     local itemsContent = Instance.new("ScrollingFrame")
     itemsContent.Parent = itemsTab
     itemsContent.Size = UDim2.new(1, -40, 1, -20)
     itemsContent.Position = UDim2.new(0, 20, 0, 10)
     itemsContent.BackgroundTransparency = 1
     itemsContent.ScrollBarThickness = 6
-    itemsContent.CanvasSize = UDim2.new(0, 0, 0, 400) -- يمكن تعديله حسب المحتوى
+    itemsContent.CanvasSize = UDim2.new(0, 0, 0, 500) -- زيادة المساحة للأدوات الإضافية
     
-    -- إضافة عنوان قائمة العناصر
-    local itemsTitle = createStyledLabel(itemsContent, "قائمة العناصر", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 10))
+    -- إضافة عنوان قائمة الأدوات
+    local itemsTitle = createStyledLabel(itemsContent, getText("toolsTitle"), UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 10))
     itemsTitle.TextSize = 18
     itemsTitle.Font = Enum.Font.GothamBold
+    
+    -- إضافة أدوات متعددة
+    local teleportToolButton = createStyledButton(itemsContent, getText("teleportTool"), Color3.fromRGB(90, 74, 164), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 50))
+    
+    local noclipToolButton = createStyledButton(itemsContent, getText("noclipTool"), Color3.fromRGB(174, 120, 41), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 105))
+    
+    local flyToolButton = createStyledButton(itemsContent, getText("flyTool"), Color3.fromRGB(41, 174, 125), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 160))
+    
+    -- إضافة أداة السرعة مع شريط تمرير
+    local speedToolButton = createStyledButton(itemsContent, getText("speedTool"), Color3.fromRGB(174, 41, 125), UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 215))
+    
+    local speedLabel = createStyledLabel(itemsContent, getText("speedValue") .. " " .. speedMultiplier, UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 270))
+    
+    local speedSlider = Instance.new("Frame")
+    speedSlider.Parent = itemsContent
+    speedSlider.Size = UDim2.new(1, 0, 0, 30)
+    speedSlider.Position = UDim2.new(0, 0, 0, 300)
+    speedSlider.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
+    
+    -- إضافة زوايا مستديرة للشريط
+    local speedSliderCorner = Instance.new("UICorner")
+    speedSliderCorner.Parent = speedSlider
+    speedSliderCorner.CornerRadius = UDim.new(0, 8)
+    
+    -- إضافة مؤشر الشريط
+    local speedIndicator = Instance.new("Frame")
+    speedIndicator.Parent = speedSlider
+    speedIndicator.Size = UDim2.new(speedMultiplier / 10, 0, 1, 0) -- القيمة الافتراضية
+    speedIndicator.BackgroundColor3 = Color3.fromRGB(174, 41, 125)
+    
+    -- إضافة زوايا مستديرة للمؤشر
+    local speedIndicatorCorner = Instance.new("UICorner")
+    speedIndicatorCorner.Parent = speedIndicator
+    speedIndicatorCorner.CornerRadius = UDim.new(0, 8)
+    
+    -- جعل شريط السرعة قابل للتفاعل
+    local isDraggingSpeed = false
     
     -- إنشاء قائمة العناصر
     local itemsList = Instance.new("Frame")
