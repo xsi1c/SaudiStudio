@@ -1,11 +1,13 @@
 -- Create a ScreenGui to hold the UI elements
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false -- Prevent UI from being destroyed on respawn
+screenGui.IgnoreGuiInset = true -- Prevent UI from being affected by TopBar
 
 -- Variable to store the teleport location
 local teleportLocation = nil
 
--- Variable to track the Mark Button state
+-- Variable to track the Mark Button state hhhhddhhhhhhh
 local markEnabled = false
 
 -- Variable to store the health percentage threshold
@@ -13,22 +15,25 @@ local healthThreshold = 50 -- Default to 50%
 
 -- Function to create the main frame
 local function createFrame()
-    local frame = Instance.new("Frame")
-    frame.Parent = screenGui
-    frame.Size = UDim2.new(0, 350, 0, 350) -- Slightly wider and shorter
-    frame.Position = UDim2.new(0.5, -175, 0.5, -175) -- Center the frame
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35) -- Dark blue-gray background
-    frame.BackgroundTransparency = 0.1 -- More opaque
-    frame.BorderSizePixel = 0 -- Remove the border
+    -- Create an ImageLabel for the background image
+    local backgroundImage = Instance.new("ImageLabel")
+    backgroundImage.Parent = screenGui
+    backgroundImage.Size = UDim2.new(0, 350, 0, 350) -- Size of the image
+    backgroundImage.Position = UDim2.new(0.5, -175, 0.5, -175) -- Center the image
+    backgroundImage.Image = "rbxassetid://7592612672" -- Replace with your Roblox image ID
+    backgroundImage.BackgroundTransparency = 0.1 -- Slightly opaque background
+    backgroundImage.BackgroundColor3 = Color3.fromRGB(25, 25, 35) -- Dark blue-gray background
+    backgroundImage.ScaleType = Enum.ScaleType.Crop -- Ensure the image fits the frame
+    backgroundImage.BorderSizePixel = 0 -- Remove the border
     
     -- Add rounded corners
     local UICorner = Instance.new("UICorner")
-    UICorner.Parent = frame
+    UICorner.Parent = backgroundImage
     UICorner.CornerRadius = UDim.new(0, 12)
     
     -- Add a title bar
     local titleBar = Instance.new("Frame")
-    titleBar.Parent = frame
+    titleBar.Parent = backgroundImage
     titleBar.Size = UDim2.new(1, 0, 0, 40)
     titleBar.Position = UDim2.new(0, 0, 0, 0)
     titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 65) -- Slightly lighter than the main frame
@@ -53,7 +58,7 @@ local function createFrame()
     
     -- Container for buttons
     local buttonContainer = Instance.new("Frame")
-    buttonContainer.Parent = frame
+    buttonContainer.Parent = backgroundImage
     buttonContainer.Size = UDim2.new(1, -20, 1, -60) -- Padding on all sides
     buttonContainer.Position = UDim2.new(0, 10, 0, 50) -- Position below title bar
     buttonContainer.BackgroundTransparency = 1
@@ -200,6 +205,22 @@ local function createFrame()
     exitButton.Font = Enum.Font.GothamBold
     exitButton.TextSize = 24
     
+    -- Add a Destroy Button
+    local destroyButton = Instance.new("TextButton")
+    destroyButton.Parent = titleBar
+    destroyButton.Text = "D"
+    destroyButton.Size = UDim2.new(0, 30, 0, 30)
+    destroyButton.Position = UDim2.new(1, -70, 0.5, -15) -- Position it next to exit button
+    destroyButton.BackgroundColor3 = Color3.fromRGB(174, 41, 41) -- Red
+    destroyButton.TextColor3 = Color3.new(1, 1, 1)
+    destroyButton.Font = Enum.Font.GothamBold
+    destroyButton.TextSize = 16
+    
+    -- Add rounded corners to destroy button
+    local destroyCorner = Instance.new("UICorner")
+    destroyCorner.Parent = destroyButton
+    destroyCorner.CornerRadius = UDim.new(0, 15)
+    
     -- Add rounded corners to exit button
     local exitCorner = Instance.new("UICorner")
     exitCorner.Parent = exitButton
@@ -291,9 +312,68 @@ local function createFrame()
 
     -- Function to delete the frame when the exit button is clicked
     exitButton.MouseButton1Click:Connect(function()
-        frame.Visible = false -- Hide the frame
+        backgroundImage.Visible = false -- Hide the frame
     end)
 
+    -- Function to destroy the script when destroy button is clicked
+    destroyButton.MouseButton1Click:Connect(function()
+        -- Create confirmation dialog
+        local dialog = Instance.new("Frame")
+        dialog.Size = UDim2.new(0, 250, 0, 100)
+        dialog.Position = UDim2.new(0.5, -125, 0.5, -50)
+        dialog.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+        dialog.BorderSizePixel = 0
+        dialog.Parent = screenGui
+        
+        local dialogCorner = Instance.new("UICorner")
+        dialogCorner.Parent = dialog
+        dialogCorner.CornerRadius = UDim.new(0, 8)
+        
+        local message = Instance.new("TextLabel")
+        message.Text = "Are you sure you want to destroy the script?"
+        message.Size = UDim2.new(1, 0, 0.5, 0)
+        message.Position = UDim2.new(0, 0, 0, 0)
+        message.BackgroundTransparency = 1
+        message.TextColor3 = Color3.new(1, 1, 1)
+        message.Font = Enum.Font.GothamMedium
+        message.TextSize = 14
+        message.Parent = dialog
+        
+        local yesButton = Instance.new("TextButton")
+        yesButton.Text = "Yes"
+        yesButton.Size = UDim2.new(0.4, 0, 0.3, 0)
+        yesButton.Position = UDim2.new(0.1, 0, 0.6, 0)
+        yesButton.BackgroundColor3 = Color3.fromRGB(174, 41, 41)
+        yesButton.TextColor3 = Color3.new(1, 1, 1)
+        yesButton.Font = Enum.Font.GothamBold
+        yesButton.Parent = dialog
+        
+        local noButton = Instance.new("TextButton")
+        noButton.Text = "No"
+        noButton.Size = UDim2.new(0.4, 0, 0.3, 0)
+        noButton.Position = UDim2.new(0.5, 0, 0.6, 0)
+        noButton.BackgroundColor3 = Color3.fromRGB(46, 148, 94)
+        noButton.TextColor3 = Color3.new(1, 1, 1)
+        noButton.Font = Enum.Font.GothamBold
+        noButton.Parent = dialog
+        
+        -- Add rounded corners to buttons
+        local yesCorner = Instance.new("UICorner")
+        yesCorner.Parent = yesButton
+        yesCorner.CornerRadius = UDim.new(0, 8)
+        
+        local noCorner = Instance.new("UICorner")
+        noCorner.Parent = noButton
+        noCorner.CornerRadius = UDim.new(0, 8)
+        
+        yesButton.MouseButton1Click:Connect(function()
+            screenGui:Destroy() -- Destroy the entire script
+        end)
+        
+        noButton.MouseButton1Click:Connect(function()
+            dialog:Destroy() -- Just close the dialog
+        end)
+    end)
 
     -- Function to give the player a teleport tool
     teleportToolButton.MouseButton1Click:Connect(function()
@@ -301,7 +381,7 @@ local function createFrame()
         tool.Name = "TP Tool"
         tool.Parent = game.Players.LocalPlayer.Backpack
         tool.ToolTip = "Click to TP"
-        CanBeDropped = false
+        tool.CanBeDropped = false -- Fixed: Added tool. prefix
         
         -- Add a handle to the tool
         local handle = Instance.new("Part")
@@ -356,21 +436,21 @@ local function createFrame()
     game:GetService("UserInputService").InputChanged:Connect(function(input)
         if dragging and input == dragInput then
             local delta = input.Position - startPos
-            frame.Position = UDim2.new(
-                frame.Position.X.Scale,
-                frame.Position.X.Offset + delta.X,
-                frame.Position.Y.Scale,
-                frame.Position.Y.Offset + delta.Y
+            backgroundImage.Position = UDim2.new(
+                backgroundImage.Position.X.Scale,
+                backgroundImage.Position.X.Offset + delta.X,
+                backgroundImage.Position.Y.Scale,
+                backgroundImage.Position.Y.Offset + delta.Y
             )
             startPos = input.Position
         end
     end)
 
-    return frame
+    return backgroundImage
 end
 
 -- Create the initial frame
-local frame = createFrame()
+local backgroundImage = createFrame()
 
 -- Add a small icon to reopen the frame
 local reopenIcon = Instance.new("ImageButton")
@@ -441,9 +521,9 @@ end)
 
 -- Function to reopen the frame when the icon is clicked
 reopenIcon.MouseButton1Click:Connect(function()
-    if frame and frame.Visible then -- Check if the frame exists and is visible
-        frame.Visible = not frame.Visible -- Toggle visibility
+    if backgroundImage and backgroundImage.Visible then -- Check if the frame exists and is visible
+        backgroundImage.Visible = not backgroundImage.Visible -- Toggle visibility
     else
-        frame = createFrame() -- Recreate the frame if it doesn't exist
+        backgroundImage = createFrame() -- Recreate the frame if it doesn't exist
     end
 end)
