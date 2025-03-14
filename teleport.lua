@@ -440,8 +440,8 @@ reopenIcon.MouseLeave:Connect(function()
 end)
 
 -- Function to reopen the frame when the icon is clicked
-rreopenIcon.MouseButton1Click:Connect(function()
-    if frame and frame.Parent then -- Check if the frame exists and is visible
+reopenIcon.MouseButton1Click:Connect(function()
+    if frame and frame.Visible then -- Check if the frame exists and is visible
         frame.Visible = not frame.Visible -- Toggle visibility
     else
         frame = createFrame() -- Recreate the frame if it doesn't exist
