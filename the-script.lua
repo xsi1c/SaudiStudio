@@ -1,4 +1,4 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/xsi1c/TP-saver/refs/heads/main/teleport.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xsi1c/TP-saver/refs/heads/main/TP-Saver.lua"))()
 
 
 --i tested it in lua so you can 
