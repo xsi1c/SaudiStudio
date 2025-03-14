@@ -1,3 +1,6 @@
+-- this the orignal script 
+-- i just want to save it
+
 -- Create a ScreenGui to hold the UI elements
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
