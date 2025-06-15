@@ -8,4 +8,4 @@ if you are lua dev you can help with doing more scripts
 this is the first scripti ever made
 
 ## have an idea to add ?
-help me to know and maybe add it by text me on IG [](https://www.instagram.com/xsi1c/)
+help me to know and maybe add it by text me on IG https://www.instagram.com/xsi1c
