@@ -1,1 +1,601 @@
-idk how to delet files XD
+-- Remote Hacker by xsi1c, fixed by BlackhatGPT
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+-- Create UI container
+local rhGui = Instance.new("ScreenGui")
+rhGui.Name = "RemoteHacker_GUI"
+rhGui.ResetOnSpawn = false
+rhGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+rhGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Mobile detection
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+
+-- Create draggable mobile icon
+local mobileIcon = Instance.new("TextButton")
+mobileIcon.Name = "RH_Toggle"
+mobileIcon.Text = "★"
+mobileIcon.Size = UDim2.new(0, 45, 0, 45)
+mobileIcon.Position = UDim2.new(0, 15, 0.5, -22)
+mobileIcon.BackgroundColor3 = Color3.fromRGB(0, 40, 0)
+mobileIcon.TextColor3 = Color3.fromRGB(0, 255, 100)
+mobileIcon.Font = Enum.Font.Code
+mobileIcon.TextSize = 18
+mobileIcon.Visible = isMobile
+mobileIcon.ZIndex = 10
+mobileIcon.Parent = rhGui
+
+-- Main UI Frame
+local mainListLayout = Instance.new("UIListLayout")
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "Main_Interface"
+mainFrame.Size = UDim2.new(0, 350, 0, 450) -- Wider and taller for better layout
+mainFrame.Position = UDim2.new(0.5, -175, 0.5, -225)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+mainFrame.BorderColor3 = Color3.fromRGB(0, 200, 0)
+mainFrame.BorderMode = Enum.BorderMode.Inset
+mainFrame.Visible = not isMobile
+mainFrame.ZIndex = 5
+mainFrame.Parent = rhGui
+
+-- Main vertical layout
+local mainListLayout = Instance.new("UIListLayout")
+mainListLayout.Padding = UDim.new(0, 10)
+mainListLayout.FillDirection = Enum.FillDirection.Vertical
+mainListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+mainListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+mainListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+mainListLayout.Parent = mainFrame
+
+local uiPadding = Instance.new("UIPadding")
+uiPadding.PaddingTop = UDim.new(0, 10)
+uiPadding.PaddingBottom = UDim.new(0, 10)
+uiPadding.PaddingLeft = UDim.new(0, 10)
+uiPadding.PaddingRight = UDim.new(0, 10)
+uiPadding.Parent = mainFrame
+
+-- Title bar with close button
+local titleBar = Instance.new("Frame")
+titleBar.BackgroundTransparency = 1
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.LayoutOrder = 1
+titleBar.Parent = mainFrame
+
+local title = Instance.new("TextLabel")
+title.Text = "REMOTE HACKER"
+title.TextColor3 = Color3.fromRGB(0, 255, 100)
+title.Font = Enum.Font.Code
+title.TextSize = 16
+title.BackgroundTransparency = 1
+title.Size = UDim2.new(0.85, 0, 1, 0)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.Parent = titleBar
+
+local closeButton = Instance.new("TextButton")
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255, 50, 50)
+closeButton.Font = Enum.Font.Code
+closeButton.TextSize = 16
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -30, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+closeButton.Parent = titleBar
+
+-- Remote List Container with Scrolling Frame
+local remotesContainer = Instance.new("Frame")
+remotesContainer.BackgroundTransparency = 1
+remotesContainer.Size = UDim2.new(1, 0, 0, 200) -- Increased height for better visibility
+remotesContainer.LayoutOrder = 2
+remotesContainer.ClipsDescendants = true
+remotesContainer.Parent = mainFrame
+
+local remotesFrame = Instance.new("ScrollingFrame")
+remotesFrame.Size = UDim2.new(1, -10, 1, 0) -- Adjusted to fit padding
+remotesFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+remotesFrame.BorderSizePixel = 0
+remotesFrame.ScrollBarThickness = 8
+remotesFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 0)
+remotesFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+remotesFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+remotesFrame.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+remotesFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Auto-managed
+remotesFrame.Parent = remotesContainer
+
+-- Vertical layout for remote buttons
+local remoteListLayout = Instance.new("UIListLayout")
+remoteListLayout.Padding = UDim.new(0, 6)
+remoteListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+remoteListLayout.FillDirection = Enum.FillDirection.Vertical
+remoteListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+remoteListLayout.Parent = remotesFrame
+
+local scrollPadding = Instance.new("UIPadding")
+scrollPadding.PaddingLeft = UDim.new(0, 6)
+scrollPadding.PaddingRight = UDim.new(0, 6)
+scrollPadding.PaddingTop = UDim.new(0, 6)
+scrollPadding.PaddingBottom = UDim.new(0, 6)
+scrollPadding.Parent = remotesFrame
+
+-- Input Container
+local inputContainer = Instance.new("Frame")
+inputContainer.BackgroundTransparency = 1
+inputContainer.Size = UDim2.new(1, 0, 0, 35)
+inputContainer.LayoutOrder = 3
+inputContainer.Parent = mainFrame
+
+local inputBox = Instance.new("TextBox")
+inputBox.PlaceholderText = "Enter RemoteEvent path"
+inputBox.Size = UDim2.new(0.85, 0, 1, 0)
+inputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+inputBox.TextColor3 = Color3.fromRGB(0, 255, 100)
+inputBox.Font = Enum.Font.Code
+inputBox.TextSize = 14
+inputBox.TextXAlignment = Enum.TextXAlignment.Left
+inputBox.Parent = inputContainer
+
+local clearButton = Instance.new("TextButton")
+clearButton.Text = "X"
+clearButton.TextColor3 = Color3.fromRGB(255, 50, 50)
+clearButton.Font = Enum.Font.Code
+clearButton.TextSize = 14
+clearButton.Size = UDim2.new(0, 35, 0, 35)
+clearButton.Position = UDim2.new(0.85, 5, 0, 0)
+clearButton.BackgroundColor3 = Color3.fromRGB(50, 0, 0)
+clearButton.Parent = inputContainer
+
+-- Button template with improved styling
+local function createButton(text, color, order)
+    local btn = Instance.new("TextButton")
+    btn.Text = text
+    btn.Size = UDim2.new(1, -20, 0, 35)
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.Font = Enum.Font.Code
+    btn.TextSize = 14
+    btn.LayoutOrder = order
+    btn.BorderSizePixel = 0
+    btn.Parent = mainFrame
+    
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.new(color.R * 1.2, color.G * 1.2, color.B * 1.2)
+    end)
+    
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = color
+    end)
+    
+    return btn
+end
+
+-- Create action buttons
+local fireBtn = createButton("FIRE REMOTE", Color3.fromRGB(0, 60, 0), 4)
+local fireAllBtn = createButton("FIRE ALL REMOTES", Color3.fromRGB(0, 60, 30), 5)
+local scanBtn = createButton("SCAN REMOTES", Color3.fromRGB(0, 60, 0), 6)
+local consoleBtn = createButton("DEV CONSOLE", Color3.fromRGB(60, 30, 0), 7)
+local dexBtn = createButton("LOAD DEX EXPLORER", Color3.fromRGB(60, 30, 0), 8)
+
+-- Status label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Text = "Ready"
+statusLabel.TextColor3 = Color3.fromRGB(0, 200, 0)
+statusLabel.Font = Enum.Font.Code
+statusLabel.TextSize = 12
+statusLabel.BackgroundTransparency = 1
+statusLabel.Size = UDim2.new(1, 0, 0, 25)
+statusLabel.LayoutOrder = 9
+statusLabel.Parent = mainFrame
+
+-- Draggable functionality
+local function makeDraggable(guiElement)
+    local dragging, dragStart, startPos
+    
+    guiElement.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = guiElement.Position
+        end
+    end)
+    
+    guiElement.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            guiElement.Position = UDim2.new(
+                startPos.X.Scale, 
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale, 
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+makeDraggable(mainFrame)
+makeDraggable(mobileIcon)
+
+-- Enhanced console handler
+local function handleConsole()
+    -- Try multiple console APIs for compatibility
+    local consoleApis = {
+        {
+            name = "rconsole",
+            toggle = function()
+                if rconsolevisible then
+                    rconsolevisible(not rconsolevisible())
+                end
+            end,
+            print = function(msg, color)
+                if rconsoleprint and color then
+                    rconsoleprint("@@" .. color:upper() .. "@@" .. msg)
+                elseif rconsoleprint then
+                    rconsoleprint(msg)
+                end
+            end,
+            clear = function()
+                if rconsoleclear then rconsoleclear() end
+            end,
+            isAvailable = (rconsoleprint ~= nil)
+        },
+        {
+            name = "_G.console",
+            toggle = function()
+                if _G.console and _G.console.isvisible then
+                    if _G.console.isvisible() then
+                        _G.console.hide()
+                    else
+                        _G.console.show()
+                    end
+                end
+            end,
+            print = function(msg) 
+                if _G.console and _G.console.print then 
+                    _G.console.print(msg) 
+                end
+            end,
+ okt = function() 
+                if _G.console and _G.console.clear then 
+                    _G.console.clear() 
+                end
+            end,
+            isAvailable = (_G.console ~= nil)
+        },
+        {
+            name = "syn",
+            toggle = function()
+                if syn and syn.console then
+                    syn.console.toggle()
+                end
+            end,
+            print = function(msg, color)
+                if syn and syn.console then
+                    syn.console.print(msg, color and Color3.fromRGB(0, 255, 100) or nil)
+                end
+            end,
+            clear = function()
+                if syn and syn.console then
+                    syn.console.clear()
+                end
+            end,
+            isAvailable = (syn and syn.console ~= nil)
+        }
+    }
+
+    -- Select first available console API
+    for _, api in ipairs(consoleApis) do
+        if api.isAvailable then
+            return api
+        end
+    end
+
+    -- Fallback to basic print
+    return {
+        name = "fallback",
+        toggle = function()
+            print("Console not available in this executor")
+        end,
+        print = function(msg) 
+            print(msg)
+        end,
+        clear = function() end,
+        isAvailable = false
+    }
+end
+
+local console = handleConsole()
+
+-- Core functionality
+local remotePaths = {}
+local remoteObjects = {}
+local isScanning = false
+
+-- Improved scanning with better UI updates
+local function scanRemotes()
+    if isScanning then return end
+    isScanning = true
+    statusLabel.Text = "Scanning..."
+    statusLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+    
+    remotePaths = {}
+    remoteObjects = {}
+    remotesFrame:ClearAllChildren()
+    
+    -- Reapply UIListLayout to ensure proper initialization
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 6)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.FillDirection = Enum.FillDirection.Vertical
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    layout.Parent = remotesFrame
+    
+    local startTime = os.clock()
+    local count = 0
+    
+    local function scanInstance(instance)
+        if not isScanning then return end
+        
+        if instance:IsA("RemoteEvent") then
+            count += 1
+            local path = instance:GetFullName()
+            table.insert(remotePaths, path)
+            remoteObjects[path] = instance
+            
+            -- Create button for each remote
+            local btn = Instance.new("TextButton")
+            btn.Text = path
+            btn.TextColor3 = Color3.fromRGB(0, 255, 100)
+            btn.TextXAlignment = Enum.TextXAlignment.Left
+            btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            btn.BorderSizePixel = 0
+            btn.Size = UDim2.new(1, -12, 0, 28) -- Adjusted for scrollbar
+            btn.Font = Enum.Font.Code
+            btn.TextSize = 12
+            btn.TextTruncate = Enum.TextTruncate.AtEnd
+            btn.LayoutOrder = count
+            btn.Parent = remotesFrame
+            
+            -- Hover effect
+            btn.MouseEnter:Connect(function()
+                btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            end)
+            btn.MouseLeave:Connect(function()
+                btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            end)
+            
+            -- Click to select
+            btn.MouseButton1Click:Connect(function()
+                inputBox.Text = path
+            end)
+            
+            if count % 25 == 0 then
+                statusLabel.Text = "Found " .. count .. " remotes..."
+                RunService.Heartbeat:Wait()
+            end
+        end
+        
+        for _, child in ipairs(instance:GetChildren()) do
+            scanInstance(child)
+        end
+    end
+    
+    task.spawn(function()
+        scanInstance(game)
+        isScanning = false
+        
+        local scanTime = os.clock() - startTime
+        statusLabel.Text = "Found " .. count .. " remotes in " .. string.format("%.2f", scanTime) .. "s"
+        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+        
+        if console.isAvailable then
+            console.print("[SCAN] Found " .. count .. " RemoteEvents in " .. string.format("%.2f", scanTime) .. " seconds\n", "green")
+        end
+    end)
+end
+
+-- Fire a specific remote
+local function fireRemote(path)
+    statusLabel.Text = "Firing remote..."
+    statusLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+    
+    if remoteObjects[path] then
+        local success, result = pcall(function()
+            remoteObjects[path]:FireServer()
+            return true
+        end)
+        
+        if console.isAvailable then
+            if success then
+                console.print("[FIRED] " .. path .. "\n", "green")
+                statusLabel.Text = "Fired: " .. path
+                statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            else
+                console.print("[ERROR] " .. path .. ": " .. tostring(result) .. "\n", "red")
+                statusLabel.Text = "Error: " .. tostring(result)
+                statusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+            end
+        end
+        return success
+    end
+    
+    local found = false
+    for _, remote in ipairs(game:GetDescendants()) do
+        if remote:IsA("RemoteEvent") and remote:GetFullName() == path then
+            found = true
+            local success, err = pcall(remote.FireServer, remote)
+            if console.isAvailable then
+                if success then
+                    console.print("[FIRED] " .. path .. " (fallback)\n", "yellow")
+                    statusLabel.Text = "Fired (fallback): " .. path
+                    statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+                else
+                    console.print("[ERROR] " .. path .. ": " .. tostring(err) .. "\n", "red")
+                    statusLabel.Text = "Error: " .. tostring(err)
+                    statusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+                end
+            end
+            break
+        end
+    end
+    
+    if not found then
+        if console.isAvailable then
+            console.print("[MISSING] " .. path .. "\n", "red")
+        end
+        statusLabel.Text = "Remote not found"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+    end
+    return found
+end
+
+-- Fire all remotes
+local function fireAllRemotes()
+    statusLabel.Text = "Firing all remotes..."
+    statusLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+    
+    local count = 0
+    local errors = 0
+    
+    for path, remote in pairs(remoteObjects) do
+        local success = pcall(function()
+            remote:FireServer()
+        end)
+        
+        if success then
+            count += 1
+        else
+            errors += 1
+        end
+        
+        if count % 10 == 0 then
+            task.wait()
+        end
+    end
+    
+    statusLabel.Text = string.format("Fired %d remotes (%d errors)", count, errors)
+    statusLabel.TextColor3 = errors == 0 and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 150, 0)
+    
+    if console.isAvailable then
+        console.print(string.format("[FIRE ALL] Fired %d remotes (%d errors)\n", count, errors), 
+                     errors == 0 and "green" or "yellow")
+    end
+end
+
+-- UI Interactions
+fireBtn.MouseButton1Click:Connect(function()
+    fireRemote(inputBox.Text)
+end)
+
+fireAllBtn.MouseButton1Click:Connect(fireAllRemotes)
+
+scanBtn.MouseButton1Click:Connect(scanRemotes)
+
+consoleBtn.MouseButton1Click:Connect(function()
+    console.toggle()
+    if console.isAvailable then
+        console.print("[CONSOLE] Toggled at " .. os.date("%X") .. "\n", "cyan")
+    end
+end)
+
+dexBtn.MouseButton1Click:Connect(function()
+    statusLabel.Text = "Loading Dex Explorer..."
+    statusLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+    
+    if console.isAvailable then
+        console.print("[DEX] Loading Dex Explorer...\n", "cyan")
+    end
+    
+    local success, result = pcall(function()
+        loadstring(game:HttpGet("https://cdn.wearedevs.net/scripts/Dex%20Explorer.txt"))()
+        return true
+    end)
+    
+    if success then
+        statusLabel.Text = "DEX Explorer loaded!"
+        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+        if console.isAvailable then
+            console.print("[DEX] Explorer loaded successfully\n", "green")
+        end
+    else
+        statusLabel.Text = "DEX load failed!"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+        if console.isAvailable then
+            console.print("[DEX] Load failed: " .. tostring(result) .. "\n", "red")
+        end
+    end
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+    if isMobile then mobileIcon.Visible = true end
+end)
+
+mobileIcon.MouseButton1Click:Connect(function()
+    mainFrame.Visible = true
+    mobileIcon.Visible = false
+end)
+
+clearButton.MouseButton1Click:Connect(function()
+    inputBox.Text = ""
+end)
+
+-- Developer Console (F9 toggle)
+UserInputService.InputBegan:Connect(function(input, processed)
+    if input.KeyCode == Enum.KeyCode.F9 and not processed then
+        console.toggle()
+        if console.isAvailable then
+            console.print("[CONSOLE] Toggled via F9\n", "cyan")
+        end
+    end
+end)
+
+-- Initialize console
+if console.isAvailable then
+    console.clear()
+    console.print(">> Remote Hacker by xsi1c, enhanced by BlackhatGPT\n", "green")
+    console.print(">> Press F9 or use button to toggle console\n\n", "yellow")
+end
+
+-- Initial scan
+task.spawn(scanRemotes)
+
+-- Smooth open animation
+task.spawn(function()
+    if not isMobile then
+        mainFrame.Position = UDim2.new(0.5, -175, 0, -230)
+        TweenService:Create(
+            mainFrame,
+            TweenInfo.new(0.7, Enum.EasingStyle.Quad),
+            {Position = UDim2.new(0.5, -175, 0.5, -225)}
+        ):Play()
+    end
+end)
+
+-- Icon pulse animation
+task.spawn(function()
+    while true do
+        if mobileIcon.Visible then
+            TweenService:Create(
+                mobileIcon,
+                TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {BackgroundTransparency = 0.3}
+            ):Play()
+            task.wait(1)
+            TweenService:Create(
+                mobileIcon,
+                TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {BackgroundTransparency = 0}
+            ):Play()
+            task.wait(1)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
